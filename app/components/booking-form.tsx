@@ -7,17 +7,28 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Slot {
+  id: string;
   time: string;
   end: string;
   label: string;
+  availableSeats: number;
+  totalSeats: number;
+  price: number;
+  title: string;
+  cafe_name: string;
+  cafe_address: string;
+  cafe_maps_link: string;
 }
 
 interface BookingFormProps {
   onSubmit: (data: {
     name: string;
     email: string;
+    phone?: string;
     date: string;
     slot: string;
+    eventId: string;
+    price: number;
   }) => Promise<void>;
   isLoading?: boolean;
 }
@@ -26,8 +37,9 @@ export function BookingForm({ onSubmit, isLoading = false }: BookingFormProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
@@ -54,8 +66,12 @@ export function BookingForm({ onSubmit, isLoading = false }: BookingFormProps) {
   };
 
   const handleDateClick = (day: number) => {
-    const selected = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    const dateStr = selected.toISOString().split('T')[0];
+    // Create date string directly to avoid timezone issues
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(day).padStart(2, '0');
+    const dateStr = `${year}-${month}-${dayStr}`;
+
     setSelectedDate(dateStr);
     setSelectedSlot(null);
     fetchSlots(dateStr);
@@ -84,8 +100,11 @@ export function BookingForm({ onSubmit, isLoading = false }: BookingFormProps) {
     await onSubmit({
       name,
       email,
+      phone: phone || undefined,
       date: selectedDate,
-      slot: selectedSlot,
+      slot: `${selectedDate} | ${selectedSlot.time}`,
+      eventId: selectedSlot.id,
+      price: selectedSlot.price,
     });
   };
 
@@ -195,7 +214,7 @@ export function BookingForm({ onSubmit, isLoading = false }: BookingFormProps) {
           </div>
 
           {/* Email */}
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <div className="flex items-center gap-2">
                 <Mail size={18} />
@@ -207,6 +226,19 @@ export function BookingForm({ onSubmit, isLoading = false }: BookingFormProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="john@example.com"
+            />
+          </div>
+
+          {/* Phone (Optional) */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Phone Number (Optional)
+            </label>
+            <Input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+91 98765 43210"
             />
           </div>
 
@@ -238,17 +270,25 @@ export function BookingForm({ onSubmit, isLoading = false }: BookingFormProps) {
                 <div className="space-y-2">
                   {slots.map((slot) => (
                     <button
-                      key={slot.time}
+                      key={slot.id}
                       type="button"
-                      onClick={() => setSelectedSlot(`${selectedDate} | ${slot.time}`)}
+                      onClick={() => setSelectedSlot(slot)}
                       className={`w-full p-3 rounded-lg border-2 transition text-left ${
-                        selectedSlot === `${selectedDate} | ${slot.time}`
+                        selectedSlot?.id === slot.id
                           ? 'border-red-500 bg-red-50'
                           : 'border-gray-200 hover:border-red-500'
                       }`}
                     >
-                      <p className="font-semibold text-gray-800">{slot.label}</p>
-                      <p className="text-sm text-gray-600">{slot.time}</p>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold text-gray-800">{slot.label}</p>
+                          <p className="text-sm text-gray-600">{slot.cafe_name}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-gray-800">₹{slot.price}</p>
+                          <p className="text-xs text-gray-500">{slot.availableSeats} seats left</p>
+                        </div>
+                      </div>
                     </button>
                   ))}
                 </div>

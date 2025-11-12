@@ -7,13 +7,15 @@ import Script from 'next/script';
 interface BookingData {
   name: string;
   email: string;
+  phone?: string;
   date: string;
   slot: string;
+  eventId: string;
+  price: number;
 }
 
 export function BookingAppSection() {
   const [isLoading, setIsLoading] = useState(false);
-  const SESSION_PRICE = 600; // ₹600 per session
 
   useEffect(() => {
     // Load Razorpay script
@@ -39,7 +41,7 @@ export function BookingAppSection() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: SESSION_PRICE,
+          amount: data.price,
           userName: data.name,
           userEmail: data.email,
           sessionTime: data.slot,
@@ -56,7 +58,7 @@ export function BookingAppSection() {
       // Step 2: Open Razorpay checkout
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: SESSION_PRICE * 100, // in paise
+        amount: data.price * 100, // in paise
         currency: 'INR',
         name: 'FlowState',
         description: 'Coworking Session Booking',
@@ -78,8 +80,10 @@ export function BookingAppSection() {
               signature: response.razorpay_signature,
               userName: data.name,
               userEmail: data.email,
+              userPhone: data.phone,
               sessionTime: data.slot,
-              amount: SESSION_PRICE,
+              amount: data.price,
+              eventId: data.eventId,
             }),
           });
 
@@ -94,9 +98,10 @@ export function BookingAppSection() {
         prefill: {
           name: data.name,
           email: data.email,
+          contact: data.phone || '',
         },
         theme: {
-          color: '#0f172a', // slate-900
+          color: '#7F654E', // FlowState brown
         },
       };
 
@@ -131,7 +136,7 @@ export function BookingAppSection() {
             Select your preferred date and time. Sessions are available Monday to Friday.
           </p>
           <div className="inline-block px-6 py-2 rounded-full font-semibold" style={{ backgroundColor: '#7F654E', color: '#EDECE8' }}>
-            ₹{SESSION_PRICE} per session
+            Pricing shown per session
           </div>
         </div>
 
