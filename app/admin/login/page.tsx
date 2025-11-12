@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -79,9 +80,9 @@ export default function AdminLoginPage() {
         </form>
 
         <div className="mt-6 text-center">
-          <a href="/" className="text-sm text-[#7F654E] hover:underline">
+          <Link href="/" className="text-sm text-[#7F654E] hover:underline">
             ← Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     </div>

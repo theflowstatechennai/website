@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BookingForm } from './booking-form';
+import { EventList } from './event-list';
 import Script from 'next/script';
 
 interface BookingData {
@@ -133,14 +133,11 @@ export function BookingAppSection() {
             Book Your Session
           </h2>
           <p className="text-lg mb-6" style={{ color: '#415049' }}>
-            Select your preferred date and time. Sessions are available Monday to Friday.
+            Browse available sessions and book instantly.
           </p>
-          <div className="inline-block px-6 py-2 rounded-full font-semibold" style={{ backgroundColor: '#7F654E', color: '#EDECE8' }}>
-            Pricing shown per session
-          </div>
         </div>
 
-        <BookingForm onSubmit={handleBooking} isLoading={isLoading} />
+        <EventList onBook={handleBooking} isLoading={isLoading} />
       </div>
     </section>
   );
