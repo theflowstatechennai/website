@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 type Cafe = {
   id: string;
   name: string;

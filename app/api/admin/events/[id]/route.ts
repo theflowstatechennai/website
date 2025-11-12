@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { isAuthenticated } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 
 // DELETE - Delete event
-async function deleteEvent(
+export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  if (!isAuthenticated(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    const { id } = params;
+    const { id } = await context.params;
 
     const { error } = await supabaseAdmin
       .from('events')
@@ -28,12 +33,17 @@ async function deleteEvent(
 }
 
 // PUT - Update event
-async function updateEvent(
+export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  if (!isAuthenticated(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    const { id } = params;
+    const { id } = await context.params;
     const body = await request.json();
 
     const { data: event, error } = await supabaseAdmin
@@ -54,6 +64,3 @@ async function updateEvent(
     return NextResponse.json({ error: 'Failed to update event' }, { status: 500 });
   }
 }
-
-export const DELETE = requireAuth(deleteEvent);
-export const PUT = requireAuth(updateEvent);

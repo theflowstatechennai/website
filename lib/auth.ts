@@ -61,11 +61,13 @@ export function clearAuthResponse(response: NextResponse): NextResponse {
 }
 
 // Middleware helper for protecting API routes
-export function requireAuth(handler: (request: NextRequest) => Promise<NextResponse>) {
-  return async (request: NextRequest) => {
+export function requireAuth<T = any>(
+  handler: (request: NextRequest, context?: T) => Promise<NextResponse>
+) {
+  return async (request: NextRequest, context?: T) => {
     if (!isAuthenticated(request)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    return handler(request);
+    return handler(request, context);
   };
 }
