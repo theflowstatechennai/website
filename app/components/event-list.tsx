@@ -36,6 +36,7 @@ export function EventList({ onBook, isLoading = false }: EventListProps) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -48,7 +49,13 @@ export function EventList({ onBook, isLoading = false }: EventListProps) {
     try {
       const response = await fetch('/api/events');
       const data = await response.json();
-      setEvents(data.events || []);
+      const fetchedEvents = data.events || [];
+      setEvents(fetchedEvents);
+
+      // Auto-select the first available date
+      if (fetchedEvents.length > 0) {
+        setSelectedDate(fetchedEvents[0].date);
+      }
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
@@ -72,6 +79,34 @@ export function EventList({ onBook, isLoading = false }: EventListProps) {
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
+  };
+
+  const formatDatePill = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Check if it's today or tomorrow
+    if (date.toDateString() === today.toDateString()) {
+      return {
+        day: 'Today',
+        date: date.getDate().toString(),
+        month: date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+      };
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return {
+        day: 'Tomorrow',
+        date: date.getDate().toString(),
+        month: date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+      };
+    } else {
+      return {
+        day: date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
+        date: date.getDate().toString(),
+        month: date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+      };
+    }
   };
 
   const handleBookClick = (event: Event) => {
@@ -225,6 +260,12 @@ export function EventList({ onBook, isLoading = false }: EventListProps) {
     );
   }
 
+  // Get unique dates
+  const uniqueDates = Array.from(new Set(events.map(e => e.date))).sort();
+
+  // Filter events by selected date
+  const filteredEvents = selectedDate ? events.filter(e => e.date === selectedDate) : [];
+
   // Show event list
   return (
     <div className="max-w-4xl mx-auto">
@@ -232,67 +273,92 @@ export function EventList({ onBook, isLoading = false }: EventListProps) {
         <h3 className="text-3xl font-bold mb-2" style={{ color: '#415049' }}>
           Upcoming Sessions
         </h3>
-        <p style={{ color: '#7F654E' }}>Select a session to book</p>
+        <p style={{ color: '#7F654E' }}>Select a date to view available sessions</p>
       </div>
 
-      <div className="space-y-8">
-        {Object.keys(groupedEvents).map((date) => (
-          <div key={date}>
-            <div className="flex items-center gap-2 mb-4">
-              <Calendar size={20} style={{ color: '#7F654E' }} />
-              <h4 className="text-xl font-semibold" style={{ color: '#415049' }}>
-                {formatDate(date)}
-              </h4>
-            </div>
+      {/* Date Selector - BookMyShow Style */}
+      <div className="mb-8 overflow-x-auto pb-4">
+        <div className="flex gap-3 min-w-max px-2">
+          {uniqueDates.map((date) => {
+            const datePill = formatDatePill(date);
+            const isSelected = selectedDate === date;
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {groupedEvents[date].map((event) => (
-                <div
-                  key={event.id}
-                  className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock size={18} style={{ color: '#7F654E' }} />
-                        <span className="font-semibold" style={{ color: '#415049' }}>
-                          {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <MapPin size={18} style={{ color: '#7F654E' }} />
-                        <span className="text-sm" style={{ color: '#7F654E' }}>
-                          {event.cafe_name}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold" style={{ color: '#415049' }}>
-                        ₹{event.price}
-                      </div>
-                    </div>
-                  </div>
+            return (
+              <button
+                key={date}
+                onClick={() => setSelectedDate(date)}
+                className={`flex flex-col items-center px-6 py-4 rounded-lg min-w-[100px] transition-all ${
+                  isSelected
+                    ? 'shadow-lg scale-105'
+                    : 'shadow-md hover:shadow-lg'
+                }`}
+                style={{
+                  backgroundColor: isSelected ? '#7F654E' : 'white',
+                  color: isSelected ? 'white' : '#415049',
+                  border: isSelected ? 'none' : '1px solid #E5E5E0'
+                }}
+              >
+                <span className="text-xs font-medium mb-1">{datePill.day}</span>
+                <span className="text-2xl font-bold">{datePill.date}</span>
+                <span className="text-xs mt-1">{datePill.month}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-                  <div className="flex items-center gap-2 mb-4">
-                    <Users size={18} style={{ color: '#7F654E' }} />
-                    <span className="text-sm" style={{ color: '#7F654E' }}>
-                      {event.availableSeats} seats left
-                    </span>
-                  </div>
-
-                  <Button
-                    onClick={() => handleBookClick(event)}
-                    className="w-full"
-                    style={{ backgroundColor: '#7F654E' }}
-                  >
-                    Book Now
-                  </Button>
+      {/* Sessions for selected date */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {filteredEvents.map((event) => (
+          <div
+            key={event.id}
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock size={18} style={{ color: '#7F654E' }} />
+                  <span className="font-semibold" style={{ color: '#415049' }}>
+                    {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                  </span>
                 </div>
-              ))}
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin size={18} style={{ color: '#7F654E' }} />
+                  <span className="text-sm" style={{ color: '#7F654E' }}>
+                    {event.cafe_name}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold" style={{ color: '#415049' }}>
+                  ₹{event.price}
+                </div>
+              </div>
             </div>
+
+            <div className="flex items-center gap-2 mb-4">
+              <Users size={18} style={{ color: '#7F654E' }} />
+              <span className="text-sm" style={{ color: '#7F654E' }}>
+                {event.availableSeats} seats left
+              </span>
+            </div>
+
+            <Button
+              onClick={() => handleBookClick(event)}
+              className="w-full"
+              style={{ backgroundColor: '#7F654E' }}
+            >
+              Book Now
+            </Button>
           </div>
         ))}
       </div>
+
+      {filteredEvents.length === 0 && selectedDate && (
+        <div className="text-center py-12">
+          <p className="text-lg" style={{ color: '#415049' }}>No sessions available for this date.</p>
+        </div>
+      )}
     </div>
   );
 }
