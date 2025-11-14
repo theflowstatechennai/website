@@ -13,18 +13,20 @@ export function verifyAdminPassword(password: string): boolean {
 
 export function createSession(): string {
   // Create a simple session token (timestamp + random string)
-  const token = Buffer.from(
-    JSON.stringify({
-      timestamp: Date.now(),
-      random: Math.random().toString(36).substring(7),
-    })
-  ).toString('base64');
+  const sessionData = JSON.stringify({
+    timestamp: Date.now(),
+    random: Math.random().toString(36).substring(7),
+  });
+  // Use btoa for base64 encoding (Edge runtime compatible)
+  const token = btoa(sessionData);
   return token;
 }
 
 export function isValidSession(token: string): boolean {
   try {
-    const session = JSON.parse(Buffer.from(token, 'base64').toString());
+    // Use atob for base64 decoding (Edge runtime compatible)
+    const sessionData = atob(token);
+    const session = JSON.parse(sessionData);
     // Session valid for 24 hours
     const twentyFourHours = 24 * 60 * 60 * 1000;
     return Date.now() - session.timestamp < twentyFourHours;
