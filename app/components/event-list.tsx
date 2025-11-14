@@ -269,16 +269,9 @@ export function EventList({ onBook, isLoading = false }: EventListProps) {
   // Show event list
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="text-center mb-8">
-        <h3 className="text-3xl font-bold mb-2" style={{ color: '#415049' }}>
-          Upcoming Sessions
-        </h3>
-        <p style={{ color: '#7F654E' }}>Select a date to view available sessions</p>
-      </div>
-
       {/* Date Selector - BookMyShow Style */}
-      <div className="mb-8 overflow-x-auto pb-4">
-        <div className="flex gap-3 min-w-max px-2">
+      <div className="mb-8 flex justify-center">
+        <div className="flex gap-3">
           {uniqueDates.map((date) => {
             const datePill = formatDatePill(date);
             const isSelected = selectedDate === date;
@@ -287,11 +280,7 @@ export function EventList({ onBook, isLoading = false }: EventListProps) {
               <button
                 key={date}
                 onClick={() => setSelectedDate(date)}
-                className={`flex flex-col items-center px-6 py-4 rounded-lg min-w-[100px] transition-all ${
-                  isSelected
-                    ? 'shadow-lg scale-105'
-                    : 'shadow-md hover:shadow-lg'
-                }`}
+                className="flex flex-col items-center px-6 py-4 rounded-lg min-w-[100px] transition-all"
                 style={{
                   backgroundColor: isSelected ? '#7F654E' : 'white',
                   color: isSelected ? 'white' : '#415049',
